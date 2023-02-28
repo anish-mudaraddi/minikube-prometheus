@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-python-hello-world-deployment
+  labels:
+    app: k8s-python-hello-world
+spec:
+  selector:
+    matchLabels:
+      app: k8s-python-hello-world
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: k8s-python-hello-world
+    spec:
+      containers:
+        - name: k8s-python-hello-world
+          image: localhost:5000/k8s_python_hello_world:latest
+          resources:
+            limits:
+              memory: 50Mi
+              cpu: "5m"
+            requests:
+              memory: 50Mi
+              cpu: "5m"
