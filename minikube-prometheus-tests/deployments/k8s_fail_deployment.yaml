@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-fail-deployment
+  labels:
+    app: k8s-fail-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-fail-deployment
+  template:
+    metadata:
+      labels:
+        app: k8s-fail-deployment
+    spec:
+      containers:
+        - name: k8s-fail-deployment
+          image: alpine:3.14 
+          command: ["/bin/sh", "-c", "sleep 30; exit 1"]
+          resources:
+            limits:
+              memory: 50Mi
+              cpu: "5m"
+            requests:
+              memory: 50Mi
+              cpu: "5m"

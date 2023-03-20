@@ -10,14 +10,14 @@ data:
     groups:
     - name: kubernetes-deployment-monitoring
       rules:
-      - alert: DeploymentFailure 
-        expr: kube_deployment_status_replicas_unavailable > 0 and time() - kube_deployment_status_last_transition_time_seconds > 300 
-        for: 1m
+      - alert: ContainerRestarts 
+        expr: rate(kube_pod_container_status_restarts_total[1h]) * 3600 > 1 
+        for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "Deployment {{$labels.deployment}} has failed for more than 5 minutes"
-          description: "The deployment {{$labels.deployment}} has failed for more than 5 minutes. Please investigate and fix the issue."
+          summary: "Pod {{$labels.namespace}}/{{$labels.pod}} restarting more than once during last one hours."
+          description: "Container {{ $labels.container }} in Pod {{$labels.namespace}}/{{$labels.pod}} restarting more than once times during last one hours."
 
   prometheus.yml: |-
     global:
@@ -25,16 +25,15 @@ data:
       evaluation_interval: 15s
     rule_files:
       - /etc/prometheus/prometheus.rules
-   
+    alerting:
+      alertmanagers:
+      - scheme: http
+        static_configs:
+        - targets:
+          - "alertmanager.monitoring.svc:9093"
+ 
     scrape_configs:
-      - job_name: 'node-exporter'
-        kubernetes_sd_configs:
-          - role: endpoints
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_endpoints_name]
-          regex: 'node-exporter'
-          action: keep
-      
+
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
         - role: endpoints
@@ -46,3 +45,7 @@ data:
         - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
           action: keep
           regex: default;kubernetes;https
+      
+      - job_name: 'kube-state-metrics'
+        static_configs:
+          - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
